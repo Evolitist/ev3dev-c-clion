@@ -1,0 +1,41 @@
+<idea-plugin>
+    <id>com.evolitist.ev3c</id>
+    <name>ev3dev C</name>
+    <version>0.1</version>
+    <vendor email="evolitist@gmail.com">Evolitist</vendor>
+
+    <description><![CDATA[
+      <a href="https://github.com/Evolitist/ev3dev-c-clion">GitHub</a> |
+      <a href="https://github.com/Evolitist/ev3dev-c-clion/issues">Issues</a>
+      This plugin allows programming <a href="https://www.ev3dev.org">ev3dev</a> devices.
+      <br>
+      <br>
+      As of now, this plugin provides support for project creation with
+      <a href="https://github.com/in4lio/ev3dev-c">the ev3dev C library</a>.
+      <br>
+      <br>
+      More instruments for interacting with ev3dev devices wil be added before v1.0.
+    ]]></description>
+
+    <change-notes><![CDATA[
+      <b>0.1</b>
+        <ul>
+            <li>Initial release</li>
+        </ul>
+    ]]>
+    </change-notes>
+
+    <!-- build 181 as we need WSL if running on Windows -->
+    <idea-version since-build="CL-181.0"/>
+
+    <depends>com.intellij.modules.clion</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <directoryProjectGenerator implementation="com.evolitist.ev3c.generator.Ev3devCProjectGenerator"/>
+    </extensions>
+
+    <actions>
+        <!-- some actions for working with connected EV3 will be here -->
+    </actions>
+
+</idea-plugin>
