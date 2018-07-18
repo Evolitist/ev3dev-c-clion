@@ -4,13 +4,15 @@ import com.evolitist.ev3c.run
 import com.evolitist.ev3c.translateToWSL
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.io.HttpRequests
 import java.io.File
 
@@ -66,16 +68,19 @@ class InstallCLibraryAction : AnAction() {
                 return@runBackgroundableTask
             }
             "rm -rf lib/ include/".run(it)
+            val statusBar = WindowManager.getInstance().getStatusBar(event.project)
             ApplicationManager.getApplication().invokeLater {
-                val notification = notificationGroup.createNotification(
-                        "Library installed!", NotificationType.INFORMATION)
-                Notifications.Bus.notify(notification, event.project)
+                JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+                        "Library installed!", null, JBColor(12250810, 3359022), null
+                ).createBalloon().show(
+                        RelativePoint.getCenterOf(statusBar.component),
+                        Balloon.Position.above
+                )
             }
         }
     }
 
     companion object {
-        private val notificationGroup = NotificationGroup.balloonGroup("ev3dev")
         private const val RELEASE_URL = "https://api.github.com/repos/Evolitist/ev3dev-c/releases/latest"
         private var lastId = 0
         private var lastTempFile: String? = null
