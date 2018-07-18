@@ -34,6 +34,7 @@ class InstallCLibraryAction : AnAction() {
                     .get("browser_download_url").asString
             val tempFile: File
             if (lastId < currentId || lastTempFile == null) {
+                lastId = currentId
                 tempFile = File.createTempFile("ev3dev-c-release", ".zip")
                 tempFile.deleteOnExit()
                 lastTempFile = tempFile.absolutePath
@@ -62,11 +63,7 @@ class InstallCLibraryAction : AnAction() {
                 "rm -rf lib/ include/".run()
                 return@runBackgroundableTask
             }
-            "ldconfig".run(it)
-            if (it.isCanceled) {
-                "rm -rf lib/ include/".run()
-                return@runBackgroundableTask
-            }
+            "sudo ldconfig".run(it)
             "rm -rf lib/ include/".run(it)
             val statusBar = WindowManager.getInstance().getStatusBar(event.project)
             ApplicationManager.getApplication().invokeLater {
