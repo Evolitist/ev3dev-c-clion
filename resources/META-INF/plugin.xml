@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C</name>
-    <version>0.1</version>
+    <version>0.2</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -11,13 +11,17 @@
       <br>
       <br>
       As of now, this plugin provides support for project creation with
-      <a href="https://github.com/in4lio/ev3dev-c">the ev3dev C library</a>.
+      <a href="https://github.com/Evolitist/ev3dev-c">the ev3dev C library</a>.
       <br>
       <br>
       More instruments for interacting with ev3dev devices wil be added before v1.0.
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.2</b>
+        <ul>
+            <li>Added action for host library download and installation</li>
+        </ul>
       <b>0.1</b>
         <ul>
             <li>Initial release</li>
@@ -36,6 +40,11 @@
 
     <actions>
         <!-- some actions for working with connected EV3 will be here -->
+        <group id="Ev3devCTools" text="ev3dev" popup="true">
+            <add-to-group group-id="CMake.ToolsMenu.Wrapper" anchor="last"/>
+            <action class="com.evolitist.ev3c.action.InstallCLibraryAction" id="InstallHostCLib"
+                    text="Install host library"/>
+        </group>
     </actions>
 
 </idea-plugin>
