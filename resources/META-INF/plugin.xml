@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C</name>
-    <version>0.2</version>
+    <version>0.3</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -18,6 +18,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.3</b>
+        <ul>
+            <li>Added action for deploying library to the EV3 brick</li>
+        </ul>
       <b>0.2</b>
         <ul>
             <li>Added action for host library download and installation</li>
@@ -44,6 +48,8 @@
             <add-to-group group-id="CMake.ToolsMenu.Wrapper" anchor="last"/>
             <action class="com.evolitist.ev3c.action.InstallCLibraryAction" id="InstallHostCLib"
                     text="Install host library"/>
+            <action class="com.evolitist.ev3c.action.DeployEv3devCLibraryAction" id="DeployEv3devCLib"
+                    text="Deploy library to robot"/>
         </group>
     </actions>
 
