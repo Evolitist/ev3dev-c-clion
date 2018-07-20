@@ -11,7 +11,8 @@
       <br>
       <br>
       As of now, this plugin provides support for project creation with
-      <a href="https://github.com/Evolitist/ev3dev-c">the ev3dev C library</a>.
+      <a href="https://github.com/Evolitist/ev3dev-c">the ev3dev C library</a>
+      as well as library deployment tool.
       <br>
       <br>
       More instruments for interacting with ev3dev devices wil be added before v1.0.
