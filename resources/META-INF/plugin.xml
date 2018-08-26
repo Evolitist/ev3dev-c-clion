@@ -7,6 +7,8 @@
     <description><![CDATA[
       <a href="https://github.com/Evolitist/ev3dev-c-clion">GitHub</a> |
       <a href="https://github.com/Evolitist/ev3dev-c-clion/issues">Issues</a>
+      <br>
+      <br>
       This plugin allows programming <a href="https://www.ev3dev.org">ev3dev</a> devices.
       <br>
       <br>
@@ -19,6 +21,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.4</b>
+        <ul>
+            <li>Updated to support CLion 2018.2</li>
+            <li>Improved library installation progress indication</li>
+        </ul>
       <b>0.3</b>
         <ul>
             <li>Added action for deploying library to the EV3 brick</li>
@@ -35,7 +42,7 @@
     </change-notes>
 
     <!-- build 181 as we need WSL if running on Windows -->
-    <idea-version since-build="CL-181.0"/>
+    <idea-version since-build="CL-182.0"/>
 
     <depends>com.intellij.modules.clion</depends>
 
