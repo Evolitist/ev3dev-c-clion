@@ -1,5 +1,6 @@
 package com.evolitist.ev3c.action
 
+import com.evolitist.ev3c.USED_LIBRARY_TYPE
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.openapi.actionSystem.AnAction
@@ -24,6 +25,10 @@ class DeployEv3devCLibraryAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         //TODO: launch some sort of a "library selection wizard"
         ProgressManager.getInstance().run(DeployLibraryTask(event.project))
+    }
+
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = "static" != e.project!!.getUserData(USED_LIBRARY_TYPE)
     }
 
     class DeployLibraryTask(project: Project?) : Task.Backgroundable(project, "Deploying library...", true, PerformInBackgroundOption.DEAF) {

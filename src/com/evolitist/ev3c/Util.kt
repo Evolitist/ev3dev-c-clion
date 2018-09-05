@@ -4,8 +4,11 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Key
 import com.jetbrains.cidr.toolchains.OSType
 import java.io.File
+
+val USED_LIBRARY_TYPE = Key<String>("usedLibraryType")
 
 fun String.run(pi: ProgressIndicator? = null): ProcessOutput {
     val process = CapturingProcessHandler(GeneralCommandLine("bash", "-c", "cd && $this"))
