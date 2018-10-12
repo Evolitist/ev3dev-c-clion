@@ -18,12 +18,32 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.io.HttpRequests
+import com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
+import com.jetbrains.cidr.cpp.toolchains.Cygwin
+import com.jetbrains.cidr.cpp.toolchains.MSVC
+import com.jetbrains.cidr.cpp.toolchains.MinGW
 import java.io.File
 
 class InstallCLibraryAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         //TODO: launch some sort of a "library selection wizard"
-        ProgressManager.getInstance().run(InstallLibraryTask(event.project))
+        //println(CPPToolchains.getInstance().defaultToolchain?.minGW?.homePath)
+        if (CPPToolchains.getInstance().defaultToolchain?.toolSet is MinGW ||
+                CPPToolchains.getInstance().defaultToolchain?.toolSet is Cygwin ||
+                CPPToolchains.getInstance().defaultToolchain?.toolSet is MSVC) {
+            val statusBar = WindowManager.getInstance().getStatusBar(event.project)
+            ApplicationManager.getApplication().invokeLater {
+                JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
+                        "Unsupported OS!", null, JBColor(0xEE4A4A, 0x412E33), null
+                ).createBalloon().show(
+                        RelativePoint.getCenterOf(statusBar.component),
+                        Balloon.Position.above
+                )
+            }
+        } else {
+            ProgressManager.getInstance().run(InstallLibraryTask(event.project))
+        }
     }
 
     class InstallLibraryTask(project: Project?) : Task.Backgroundable(project, "Installing library...", true, PerformInBackgroundOption.DEAF) {
@@ -31,8 +51,8 @@ class InstallCLibraryAction : AnAction() {
             it.text = "Getting release info..."
             //TODO: check if libraries are already installed
             val json = HttpRequests.request(RELEASE_URL)
-                    .connectTimeout(0)
-                    .readTimeout(0)
+                    .connectTimeout(300000)
+                    .readTimeout(300000)
                     .redirectLimit(10)
                     .readString(it)
             if (it.isCanceled) return
@@ -87,6 +107,7 @@ class InstallCLibraryAction : AnAction() {
             it.text = "Cleaning up..."
             "rm -rf lib/ include/".run(it)
             it.fraction = 1.0
+            CMakeWorkspace.getInstance(project).scheduleReload(true)
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             ApplicationManager.getApplication().invokeLater {
                 JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(

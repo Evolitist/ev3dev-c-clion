@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C</name>
-    <version>0.4.1</version>
+    <version>0.7</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -12,15 +12,24 @@
       This plugin allows programming <a href="https://www.ev3dev.org">ev3dev</a> devices.
       <br>
       <br>
-      As of now, this plugin provides support for project creation with
+      This plugin provides support for project creation & execution with
       <a href="https://github.com/Evolitist/ev3dev-c">the ev3dev C library</a>
-      as well as library deployment tool.
+      as well as a few tools for configuring ev3dev devices.
       <br>
       <br>
       More instruments for interacting with ev3dev devices wil be added before v1.0.
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.7</b>
+        <ul>
+            <li>Added separate "Deploy" button</li>
+            <li>Added run configuration allowing for program execution on ev3dev</li>
+            <li>Suppressed "Endless loop" warnings in ev3dev-C projects</li>
+            <li>Added automatic library updater</li>
+            <li>Added device connection indicator</li>
+            <li>Added basic ev3dev file manager tool window</li>
+        </ul>
       <b>0.4.1</b>
         <ul>
             <li>Added ability to link executable to ev3dev lib statically</li>
@@ -50,9 +59,21 @@
 
     <depends>com.intellij.modules.clion</depends>
 
+    <project-components>
+        <component>
+            <implementation-class>com.evolitist.ev3c.component.Ev3devUpdateChecker</implementation-class>
+        </component>
+        <component>
+            <implementation-class>com.evolitist.ev3c.component.Ev3devConnector</implementation-class>
+        </component>
+    </project-components>
+
     <extensions defaultExtensionNs="com.intellij">
         <directoryProjectGenerator implementation="com.evolitist.ev3c.generator.Ev3devCProjectGenerator"/>
+        <configurationType implementation="com.evolitist.ev3c.execution.Ev3devRunConfigurationType"/>
         <stepsBeforeRunProvider implementation="com.evolitist.ev3c.execution.Ev3devDeployBeforeRunTaskProvider"/>
+        <toolWindow id="Device Files" icon="AllIcons.Nodes.Folder" anchor="right" secondary="true"
+                    factoryClass="com.evolitist.ev3c.toolwindow.Ev3devFilesToolWindowFactory"/>
     </extensions>
 
     <actions>
@@ -64,6 +85,14 @@
             <action class="com.evolitist.ev3c.action.DeployEv3devCLibraryAction" id="DeployEv3devCLib"
                     text="Deploy library to robot"/>
         </group>
+
+        <group id="Ev3devTools.Run">
+            <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
+            <add-to-group group-id="TouchBarDefault" relative-to-action="RunConfiguration" anchor="before"/>
+            <action id="Ev3dev.Deploy" class="com.evolitist.ev3c.action.DeployProgramAction" use-shortcut-of="Install"/>
+            <action id="Ev3dev.State" class="com.evolitist.ev3c.action.BrickSelectorAction"/>
+        </group>
+
     </actions>
 
     <!--<project-components>

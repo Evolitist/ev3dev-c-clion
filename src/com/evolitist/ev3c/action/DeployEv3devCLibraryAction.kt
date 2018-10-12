@@ -1,8 +1,8 @@
 package com.evolitist.ev3c.action
 
-import com.evolitist.ev3c.USED_LIBRARY_TYPE
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +28,7 @@ class DeployEv3devCLibraryAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = "static" != e.project!!.getUserData(USED_LIBRARY_TYPE)
+        e.presentation.isEnabledAndVisible = "static" != PropertiesComponent.getInstance(e.project).getValue("ev3cLibraryType", "shared")
     }
 
     class DeployLibraryTask(project: Project?) : Task.Backgroundable(project, "Deploying library...", true, PerformInBackgroundOption.DEAF) {
@@ -36,8 +36,8 @@ class DeployEv3devCLibraryAction : AnAction() {
             it.text = "Getting release info..."
             //TODO: check if libraries are already installed
             val json = HttpRequests.request(RELEASE_URL)
-                    .connectTimeout(0)
-                    .readTimeout(0)
+                    .connectTimeout(300000)
+                    .readTimeout(300000)
                     .redirectLimit(10)
                     .readString(it)
             if (it.isCanceled) return
