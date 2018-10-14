@@ -1,5 +1,6 @@
 package com.evolitist.ev3c.action
 
+import com.evolitist.ev3c.component.Ev3devConnector
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.ide.util.PropertiesComponent
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.io.HttpRequests
@@ -33,6 +33,8 @@ class DeployEv3devCLibraryAction : AnAction() {
 
     class DeployLibraryTask(project: Project?) : Task.Backgroundable(project, "Deploying library...", true, PerformInBackgroundOption.DEAF) {
         override fun run(it: ProgressIndicator) {
+            val conn = project?.getComponent(Ev3devConnector::class.java) ?: return
+            val sftp = conn.sftp ?: return
             it.text = "Getting release info..."
             //TODO: check if libraries are already installed
             val json = HttpRequests.request(RELEASE_URL)
@@ -41,16 +43,15 @@ class DeployEv3devCLibraryAction : AnAction() {
                     .redirectLimit(10)
                     .readString(it)
             if (it.isCanceled) return
-            it.fraction = 0.05
 
             val data = Gson().fromJson(json, JsonElement::class.java).asJsonObject
             val currentId = data.get("id").asInt
             val downloadUrl = data.getAsJsonArray("assets")[0].asJsonObject
                     .get("browser_download_url").asString
             val tempFile: File
+            val lastId = PropertiesComponent.getInstance().getInt("lastCLibId", 0)
             if (lastId < currentId || lastTempFile == null) {
                 it.text = "Fetching latest release..."
-                lastId = currentId
                 tempFile = File.createTempFile("ev3dev-c-release", ".zip")
                 tempFile.deleteOnExit()
                 lastTempFile = tempFile.absolutePath
@@ -63,43 +64,27 @@ class DeployEv3devCLibraryAction : AnAction() {
             } else {
                 tempFile = File(lastTempFile)
             }
-            it.fraction = 0.49
 
             it.text = "Connecting to robot..."
-            val connBuilder = ConnectionBuilder("192.168.0.1", 22)
-                    .withUsername("robot")
-                    .withPassword("maker")
             if (it.isCanceled) return
-            it.fraction = 0.5
             it.text = "Uploading library..."
-            connBuilder.openSftpChannel().uploadFileOrDir(tempFile, "/home/robot/", "release.zip")
+            sftp.uploadFileOrDir(tempFile, "/home/robot/", "release.zip")
             if (it.isCanceled) return
-            it.fraction = 0.75
             it.text = "Installing library..."
-            connBuilder.execBuilder("unzip release.zip")
-                    .execute()
+            conn("unzip release.zip")
                     .waitFor(10, TimeUnit.SECONDS)
             if (it.isCanceled) return
-            it.fraction = 0.8
-            connBuilder.execBuilder("echo maker | sudo -S cp -f lib/* /usr/local/lib/")
-                    .execute()
+            conn("echo maker | sudo -S cp -f lib/* /usr/local/lib/")
                     .waitFor(10, TimeUnit.SECONDS)
             if (it.isCanceled) return
-            it.fraction = 0.85
-            connBuilder.execBuilder("echo maker | sudo -S cp -f include/* /usr/local/include/")
-                    .execute()
+            conn("echo maker | sudo -S cp -f include/* /usr/local/include/")
                     .waitFor(10, TimeUnit.SECONDS)
             if (it.isCanceled) return
-            it.fraction = 0.9
-            connBuilder.execBuilder("echo maker | sudo -S ldconfig")
-                    .execute()
+            conn("echo maker | sudo -S ldconfig")
                     .waitFor(10, TimeUnit.SECONDS)
-            it.fraction = 0.95
             it.text = "Cleaning up..."
-            connBuilder.execBuilder("rm -rf release.zip include/ lib/")
-                    .execute()
+            conn("rm -rf release.zip include/ lib/")
                     .waitFor(10, TimeUnit.SECONDS)
-            it.fraction = 1.0
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             ApplicationManager.getApplication().invokeLater {
                 JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(

@@ -58,11 +58,6 @@ class Ev3devCProjectGenerator : CMakeProjectGenerator() {
     override fun generateProject(project: Project, baseDir: VirtualFile, settings: CMakeProjectSettings, module: Module) {
         super.generateProject(project, baseDir, settings, module)
 
-        BASE_PROFILE.modifyProfile {
-            val psi = PsiManager.getInstance(project).findFile(baseDir.findChild("main.c")!!)!!
-            it.disableTool("EndlessLoop", psi.originalElement)
-        }
-
         CMakeRunConfigurationManager.getInstance(project).setShouldGenerateConfigurations(false)
         PropertiesComponent.getInstance(project).setValue("ev3cLibraryType", usedLibraryType)
 
@@ -77,6 +72,11 @@ class Ev3devCProjectGenerator : CMakeProjectGenerator() {
         msgBus.subscribe(CMakeWorkspaceListener.TOPIC, object : CMakeWorkspaceListener {
             override fun reloadingFinished(canceled: Boolean) {
                 if (!canceled) {
+                    BASE_PROFILE.modifyProfile {
+                        val psi = PsiManager.getInstance(project).findFile(baseDir.findChild("main.c")!!)!!
+                        it.disableTool("EndlessLoop", psi.originalElement)
+                    }
+
                     val runManager = RunManagerEx.getInstanceEx(project) as RunManagerImpl
                     runManager.fireBeginUpdate()
                     val runConfHelper = CMakeRunConfigurationType.getHelper(project)

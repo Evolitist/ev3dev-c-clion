@@ -1,5 +1,6 @@
 package com.evolitist.ev3c.execution
 
+import com.evolitist.ev3c.component.Ev3devConnector
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
 import com.intellij.execution.Platform
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ssh.ConnectionBuilder
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.cidr.CidrBundle
 import com.jetbrains.cidr.cpp.execution.build.CMakeTargetAction
@@ -30,21 +30,19 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
     override fun isConfigurable() = false
 
     override fun executeTask(p0: DataContext?, p1: RunConfiguration, p2: ExecutionEnvironment, p3: Ev3devDeployBeforeRunTask): Boolean {
+        val connector = p1.project.getComponent(Ev3devConnector::class.java)
+        val sftp = connector.sftp ?: return false
         val messagesWindow = ToolWindowManager.getInstance(p1.project).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
         val contents = messagesWindow.contentManager
         val console = ContainerUtil.find(contents.contents) { s ->
             s.displayName == CidrBundle.message("build.logToolWindowName", emptyArray<Any>())
         }!!.component as ConsoleViewImpl
-        while (!console.text.contains("Build finished", false)) {
-        }
+        Thread.sleep(500)
         console.print("\nSending program to ev3dev device...\n", ConsoleViewContentType.NORMAL_OUTPUT)
-        val builder = ConnectionBuilder("192.168.0.1", 22)
-                .withUsername("robot")
-                .withPassword("maker")
         try {
-            builder.openSftpChannel(3).uploadFileOrDir(File("${p1.project.basePath}${Platform.current().fileSeparator}cmake-build-debug${Platform.current().fileSeparator}${p1.project.name}"), "/home/robot", p1.project.name)
+            sftp.uploadFileOrDir(File("${p1.project.basePath}${Platform.current().fileSeparator}cmake-build-debug${Platform.current().fileSeparator}${p1.project.name}"), "/home/robot", p1.project.name)
             console.print("Setting permissions...\n", ConsoleViewContentType.NORMAL_OUTPUT)
-            builder.execBuilder("chmod +x ~/${p1.project.name}").execute().waitFor()
+            connector("chmod +x ~/${p1.project.name}").waitFor()
             console.print("File upload complete\n", ConsoleViewContentType.NORMAL_OUTPUT)
         } catch (e: Exception) {
             console.print("Didn't find connected ev3dev device\n", ConsoleViewContentType.ERROR_OUTPUT)

@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.ssh.ConnectionBuilder
-import com.intellij.ssh.SshSession
 import com.intellij.ssh.channels.SftpChannel
+import com.intellij.ssh.process.SshExecProcess
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -14,33 +14,37 @@ import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 class Ev3devConnector(private val project: Project) : ProjectComponent {
+    private val address = InetAddress.getByName("192.168.0.1")
+    private val conn = ConnectionBuilder("192.168.0.1", 22)
+            .withUsername("robot")
+            .withPassword("maker")
     private val connectorThread = Thread {
-        val conn = ConnectionBuilder("192.168.0.1", 22)
-                .withUsername("robot")
-                .withPassword("maker")
-        val address = InetAddress.getByName("192.168.0.1")
         while (shouldRun) {
             while (!address.isReachable(250));
             state = State.CONNECTING
             fireChangeEvent()
             try {
-                session = conn.connect()
+                sftp = conn.openSftpChannel()
                 stateName = conn.execBuilder("hostname").execute().inputStream.bufferedReader().readLine()
                 state = State.CONNECTED
                 fireChangeEvent()
-                sftp = conn.openSftpChannel()
                 fireSftpUpdateEvent()
-                while (session!!.isConnected && shouldRun);
+                while (sftp!!.isConnected && address.isReachable(250) && shouldRun);
                 stateName = null
-                if (!session!!.isConnected) {
-                    sftp = null
-                    fireSftpUpdateEvent()
-                    session = null
+                if (!sftp!!.isConnected || !address.isReachable(250)) {
                     state = State.DISCONNECTED
                     fireChangeEvent()
+                    sftp = null
+                    fireSftpUpdateEvent()
                 }
             } catch (e: Exception) {
+                stateName = null
                 state = State.ERROR
+                fireChangeEvent()
+                sftp = null
+                fireSftpUpdateEvent()
+                Thread.sleep(2000)
+                state = State.DISCONNECTED
                 fireChangeEvent()
             }
         }
@@ -51,10 +55,6 @@ class Ev3devConnector(private val project: Project) : ProjectComponent {
 
     @Volatile
     private var stateName: String? = null
-
-    @Volatile
-    var session: SshSession? = null
-        private set
 
     @Volatile
     var sftp: SftpChannel? = null
@@ -122,6 +122,10 @@ class Ev3devConnector(private val project: Project) : ProjectComponent {
     }
 
     fun getStateName() = stateName ?: state.title
+
+    operator fun invoke(command: String, timeout: Int = 0): SshExecProcess {
+        return conn.execBuilder(command).execute(timeout)
+    }
 
     enum class State(val icon: Icon, val title: String) {
         DISCONNECTED(AllIcons.RunConfigurations.TestIgnored, "<no device>"),

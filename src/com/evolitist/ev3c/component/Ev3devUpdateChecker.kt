@@ -60,7 +60,6 @@ class Ev3devUpdateChecker : ProjectComponent {
                     "<html>ev3dev C library is ready to <a href=\"update\">update</a>.</html>",
                     NotificationType.INFORMATION
             ) { notification, _ ->
-                props.setValue("lastCLibId", currentId, 0)
                 val ie = MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON1)
                 ActionManager.getInstance().tryToExecute(InstallCLibraryAction(), ie, null, null, true)
                 notification.hideBalloon()

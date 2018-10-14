@@ -4,6 +4,7 @@ import com.evolitist.ev3c.run
 import com.evolitist.ev3c.translateToWSL
 import com.google.gson.Gson
 import com.google.gson.JsonElement
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +29,6 @@ import java.io.File
 class InstallCLibraryAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         //TODO: launch some sort of a "library selection wizard"
-        //println(CPPToolchains.getInstance().defaultToolchain?.minGW?.homePath)
         if (CPPToolchains.getInstance().defaultToolchain?.toolSet is MinGW ||
                 CPPToolchains.getInstance().defaultToolchain?.toolSet is Cygwin ||
                 CPPToolchains.getInstance().defaultToolchain?.toolSet is MSVC) {
@@ -56,16 +56,16 @@ class InstallCLibraryAction : AnAction() {
                     .redirectLimit(10)
                     .readString(it)
             if (it.isCanceled) return
-            it.fraction = 0.05
 
             val data = Gson().fromJson(json, JsonElement::class.java).asJsonObject
             val currentId = data.get("id").asInt
             val downloadUrl = data.getAsJsonArray("assets")[0].asJsonObject
                     .get("browser_download_url").asString
             val tempFile: File
+            val lastId = PropertiesComponent.getInstance().getInt("lastCLibId", 0)
             if (lastId < currentId || lastTempFile == null) {
                 it.text = "Fetching latest release..."
-                lastId = currentId
+                PropertiesComponent.getInstance().setValue("lastCLibId", currentId, 0)
                 tempFile = File.createTempFile("ev3dev-c-release", ".zip")
                 tempFile.deleteOnExit()
                 lastTempFile = tempFile.absolutePath
@@ -78,7 +78,6 @@ class InstallCLibraryAction : AnAction() {
             } else {
                 tempFile = File(lastTempFile)
             }
-            it.fraction = 0.5
 
             it.text = "Installing library..."
             "unzip ${tempFile.translateToWSL()}".run(it)
@@ -87,26 +86,20 @@ class InstallCLibraryAction : AnAction() {
                 "rm -rf lib/ include/".run()
                 return
             }
-            it.fraction = 0.6
             "cp -f lib/* /usr/local/lib/".run(it)
             if (it.isCanceled) {
                 it.text = "Cleaning up..."
                 "rm -rf lib/ include/".run()
                 return
             }
-            it.fraction = 0.7
             "cp -f include/* /usr/local/include/".run(it)
             if (it.isCanceled) {
                 it.text = "Cleaning up..."
                 "rm -rf lib/ include/".run()
                 return
             }
-            it.fraction = 0.8
-            "sudo ldconfig".run(it)
-            it.fraction = 0.9
             it.text = "Cleaning up..."
             "rm -rf lib/ include/".run(it)
-            it.fraction = 1.0
             CMakeWorkspace.getInstance(project).scheduleReload(true)
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             ApplicationManager.getApplication().invokeLater {
