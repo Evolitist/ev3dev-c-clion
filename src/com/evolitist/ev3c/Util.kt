@@ -36,6 +36,13 @@ fun File.translateToWSL(): String {
 
 fun RemoteFileObject.wrap() = Ev3devFilesToolWindowFactory.SftpFile(this)
 
+inline fun action(title: String, crossinline action: (AnActionEvent) -> Unit): AnAction {
+    return object : AnAction(title) {
+        override fun actionPerformed(p0: AnActionEvent) = action(p0)
+        override fun displayTextInToolbar() = true
+    }
+}
+
 inline fun iconAction(icon: Icon, title: String? = null, crossinline action: (AnActionEvent) -> Unit): AnAction {
     return object : AnAction(title, null, icon) {
         override fun actionPerformed(p0: AnActionEvent) = action(p0)

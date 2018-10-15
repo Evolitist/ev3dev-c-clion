@@ -1,5 +1,6 @@
 package com.evolitist.ev3c.toolwindow
 
+import com.evolitist.ev3c.action
 import com.evolitist.ev3c.component.Ev3devConnector
 import com.evolitist.ev3c.iconAction
 import com.evolitist.ev3c.wrap
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ssh.RemoteFileObject
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
@@ -26,6 +28,14 @@ class Ev3devFilesToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(p0: Project, p1: ToolWindow) {
         val factory = ContentFactory.SERVICE.getInstance()
         val component = p0.getComponent(Ev3devConnector::class.java)
+        (p1 as ToolWindowEx).setAdditionalGearActions(DefaultActionGroup(
+                action("Restart UI") {
+                    // TODO: debug, debug, DEBUG
+                    val connector = it.project?.getComponent(Ev3devConnector::class.java) ?: return@action
+                    connector.sftp ?: return@action
+                    connector("echo 'maker' | sudo -S systemctl restart brickman")
+                }
+        ))
         p1.contentManager.addContent(factory.createContent(
                 fileTree(component, "/home/robot"), "Home", false
         ))
