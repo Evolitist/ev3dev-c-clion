@@ -8,6 +8,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ssh.RemoteFileObject
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
+import com.jetbrains.cidr.cpp.toolchains.MinGW
+import com.jetbrains.cidr.cpp.toolchains.WSL
 import com.jetbrains.cidr.toolchains.OSType
 import java.io.File
 import javax.swing.Icon
@@ -23,14 +26,45 @@ fun String.run(pi: ProgressIndicator? = null): ProcessOutput {
 
 fun File.translateToWSL(): String {
     return when (OSType.getCurrent()) {
-        OSType.WIN -> {
-            val wslPath = canonicalPath
-                    .decapitalize()
-                    .replaceFirst(":", "")
-                    .replace("\\", "/")
-            "/mnt/$wslPath"
+        OSType.WIN -> when (CPPToolchains.getInstance().defaultToolchain) {
+            is WSL -> {
+                val wslPath = canonicalPath
+                        .decapitalize()
+                        .replaceFirst(":", "")
+                        .replace("\\", "/")
+                "/mnt/$wslPath"
+            }
+            else -> absolutePath
         }
         else -> absolutePath
+    }
+}
+
+fun defaultLibLocation(): String {
+    return when (OSType.getCurrent()) {
+        OSType.WIN -> {
+            val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet
+            when (toolchain) {
+                is WSL -> "/usr/arm-linux-gnueabi/lib"
+                is MinGW -> "${toolchain.homePath}\\arm-ev3dev-linux-gnueabi\\lib"
+                else -> ""
+            }
+        }
+        else -> "/usr/arm-linux-gnueabi/lib"
+    }
+}
+
+fun defaultIncludeLocation(): String {
+    return when (OSType.getCurrent()) {
+        OSType.WIN -> {
+            val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet
+            when (toolchain) {
+                is WSL -> "/usr/arm-linux-gnueabi/include/ev3dev"
+                is MinGW -> "${toolchain.homePath}\\arm-ev3dev-linux-gnueabi\\include\\ev3dev"
+                else -> ""
+            }
+        }
+        else -> "/usr/arm-linux-gnueabi/include/ev3dev"
     }
 }
 

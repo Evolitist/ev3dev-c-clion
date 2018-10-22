@@ -1,5 +1,7 @@
 package com.evolitist.ev3c.action
 
+import com.evolitist.ev3c.defaultIncludeLocation
+import com.evolitist.ev3c.defaultLibLocation
 import com.evolitist.ev3c.run
 import com.evolitist.ev3c.translateToWSL
 import com.google.gson.Gson
@@ -25,17 +27,17 @@ import com.jetbrains.cidr.cpp.toolchains.Cygwin
 import com.jetbrains.cidr.cpp.toolchains.MSVC
 import com.jetbrains.cidr.cpp.toolchains.MinGW
 import java.io.File
+import java.util.zip.ZipInputStream
 
 class InstallCLibraryAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         //TODO: launch some sort of a "library selection wizard"
-        if (CPPToolchains.getInstance().defaultToolchain?.toolSet is MinGW ||
-                CPPToolchains.getInstance().defaultToolchain?.toolSet is Cygwin ||
+        if (CPPToolchains.getInstance().defaultToolchain?.toolSet is Cygwin ||
                 CPPToolchains.getInstance().defaultToolchain?.toolSet is MSVC) {
             val statusBar = WindowManager.getInstance().getStatusBar(event.project)
             ApplicationManager.getApplication().invokeLater {
                 JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-                        "Unsupported OS!", null, JBColor(0xEE4A4A, 0x412E33), null
+                        "Unsupported OS/toolchain!", null, JBColor(0xEE4A4A, 0x412E33), null
                 ).createBalloon().show(
                         RelativePoint.getCenterOf(statusBar.component),
                         Balloon.Position.above
@@ -80,26 +82,61 @@ class InstallCLibraryAction : AnAction() {
             }
 
             it.text = "Installing library..."
-            "unzip ${tempFile.translateToWSL()}".run(it)
-            if (it.isCanceled) {
+            if (CPPToolchains.getInstance().defaultToolchain?.toolSet is MinGW) {
+                val buffer = ByteArray(1024)
+                val zip = ZipInputStream(tempFile.inputStream())
+                var entry = zip.nextEntry
+                while (entry != null) {
+                    if (!entry.isDirectory) {
+                        val name = entry.name.substringAfterLast("/")
+                        if (name.endsWith(".h")) {
+                            val hFile = File(defaultIncludeLocation(), name)
+                            hFile.parentFile.mkdirs()
+                            val fos = hFile.outputStream()
+                            var len = zip.read(buffer)
+                            while (len > 0) {
+                                fos.write(buffer, 0, len)
+                                len = zip.read(buffer)
+                            }
+                            fos.close()
+                        } else {
+                            val lFile = File(defaultLibLocation(), name)
+                            lFile.parentFile.mkdirs()
+                            val fos = lFile.outputStream()
+                            var len = zip.read(buffer)
+                            while (len > 0) {
+                                fos.write(buffer, 0, len)
+                                len = zip.read(buffer)
+                            }
+                            fos.close()
+                        }
+                    }
+                    entry = zip.nextEntry
+                }
+                zip.closeEntry()
+                zip.close()
+            } else {
+                "unzip ${tempFile.translateToWSL()}".run(it)
+                if (it.isCanceled) {
+                    it.text = "Cleaning up..."
+                    "rm -rf lib/ include/".run()
+                    return
+                }
+                "cp -f lib/* /usr/local/lib/".run(it)
+                if (it.isCanceled) {
+                    it.text = "Cleaning up..."
+                    "rm -rf lib/ include/".run()
+                    return
+                }
+                "cp -f include/* /usr/local/include/".run(it)
+                if (it.isCanceled) {
+                    it.text = "Cleaning up..."
+                    "rm -rf lib/ include/".run()
+                    return
+                }
                 it.text = "Cleaning up..."
-                "rm -rf lib/ include/".run()
-                return
+                "rm -rf lib/ include/".run(it)
             }
-            "cp -f lib/* /usr/local/lib/".run(it)
-            if (it.isCanceled) {
-                it.text = "Cleaning up..."
-                "rm -rf lib/ include/".run()
-                return
-            }
-            "cp -f include/* /usr/local/include/".run(it)
-            if (it.isCanceled) {
-                it.text = "Cleaning up..."
-                "rm -rf lib/ include/".run()
-                return
-            }
-            it.text = "Cleaning up..."
-            "rm -rf lib/ include/".run(it)
             CMakeWorkspace.getInstance(project).scheduleReload(true)
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             ApplicationManager.getApplication().invokeLater {

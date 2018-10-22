@@ -30,7 +30,7 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
     override fun isConfigurable() = false
 
     override fun executeTask(p0: DataContext?, p1: RunConfiguration, p2: ExecutionEnvironment, p3: Ev3devDeployBeforeRunTask): Boolean {
-        val connector = p1.project.getComponent(Ev3devConnector::class.java)
+        val connector = Ev3devConnector.getInstance(p1.project)
         val sftp = connector.sftp ?: return false
         val messagesWindow = ToolWindowManager.getInstance(p1.project).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
         val contents = messagesWindow.contentManager

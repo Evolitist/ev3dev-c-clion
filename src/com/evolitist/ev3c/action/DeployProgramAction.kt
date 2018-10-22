@@ -31,7 +31,7 @@ class DeployProgramAction : CMakeTargetAction("Deploy", null, AllIcons.Nodes.Dep
 
     override fun doBuild(p0: Project, p1: CMakeAppRunConfiguration.BuildAndRunConfigurations) {
         runAsync {
-            val connector = p0.getComponent(Ev3devConnector::class.java)
+            val connector = Ev3devConnector.getInstance(p0)
             val sftp = connector.sftp ?: return@runAsync
             CMakeBuild.build(p0, p1).get()
             val messagesWindow = ToolWindowManager.getInstance(p0).getToolWindow(ToolWindowId.MESSAGES_WINDOW)

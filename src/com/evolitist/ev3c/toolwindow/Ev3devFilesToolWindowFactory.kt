@@ -27,11 +27,11 @@ import javax.swing.tree.DefaultTreeModel
 class Ev3devFilesToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(p0: Project, p1: ToolWindow) {
         val factory = ContentFactory.SERVICE.getInstance()
-        val component = p0.getComponent(Ev3devConnector::class.java)
+        val component = Ev3devConnector.getInstance(p0)
         (p1 as ToolWindowEx).setAdditionalGearActions(DefaultActionGroup(
                 action("Restart UI") {
                     // TODO: debug, debug, DEBUG
-                    val connector = it.project?.getComponent(Ev3devConnector::class.java) ?: return@action
+                    val connector = Ev3devConnector.getInstance(it.project!!)
                     connector.sftp ?: return@action
                     connector("echo 'maker' | sudo -S systemctl restart brickman")
                 }

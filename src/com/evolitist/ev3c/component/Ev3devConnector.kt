@@ -2,7 +2,7 @@ package com.evolitist.ev3c.component
 
 import com.google.common.collect.ImmutableSet
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ssh.channels.SftpChannel
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
-class Ev3devConnector(private val project: Project) : ProjectComponent {
+class Ev3devConnector(private val project: Project) {
     private val address = InetAddress.getByName("192.168.0.1")
     private val conn = ConnectionBuilder("192.168.0.1", 22)
             .withUsername("robot")
@@ -66,14 +66,11 @@ class Ev3devConnector(private val project: Project) : ProjectComponent {
     private val listeners = AtomicReference(ImmutableSet.of<() -> Unit>())
     private val sftpListeners = AtomicReference(ImmutableSet.of<(SftpChannel?) -> Unit>())
 
-    override fun initComponent() {
+    init {
         connectorThread.start()
     }
 
-    override fun projectOpened() {}
-    override fun projectClosed() {}
-
-    override fun disposeComponent() {
+    fun dispose() {
         shouldRun = false
         if (connectorThread.isAlive) {
             connectorThread.join(1000)
@@ -132,5 +129,10 @@ class Ev3devConnector(private val project: Project) : ProjectComponent {
         CONNECTING(AllIcons.RunConfigurations.TestNotRan, "<connecting>"),
         CONNECTED(AllIcons.RunConfigurations.TestPassed, "<unknown>"),
         ERROR(AllIcons.RunConfigurations.TestError, "<error>");
+    }
+
+    companion object {
+        @JvmStatic
+        fun getInstance(project: Project): Ev3devConnector = ServiceManager.getService(project, Ev3devConnector::class.java)
     }
 }

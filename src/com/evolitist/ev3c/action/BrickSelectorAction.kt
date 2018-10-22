@@ -1,6 +1,7 @@
 package com.evolitist.ev3c.action
 
 import com.evolitist.ev3c.component.Ev3devConnector
+import com.evolitist.ev3c.defaultLibLocation
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -17,6 +18,7 @@ class BrickSelectorAction : AnAction() {
     private val knownProjects = synchronizedList(ArrayList<Project>())
 
     override fun actionPerformed(p0: AnActionEvent) {
+        println(defaultLibLocation())
     }
 
     override fun update(e: AnActionEvent) {
@@ -28,16 +30,16 @@ class BrickSelectorAction : AnAction() {
         project ?: return
         val check = PropertiesComponent.getInstance(project).getValue("ev3cLibraryType")
         e.presentation.isVisible = CMakeWorkspace.getInstance(project).isInitialized && check != null
-        if (check == null) {
-            project.getComponent(Ev3devConnector::class.java).disposeComponent()
-            return
+        if (check != null) {
+            Ev3devConnector.getInstance(project)
         }
         if (!knownProjects.contains(project)) {
             knownProjects += project
             Disposer.register(project, Disposable {
                 knownProjects -= project
+                Ev3devConnector.getInstance(project).dispose()
             })
-            val connector = project.getComponent(Ev3devConnector::class.java)
+            val connector = Ev3devConnector.getInstance(project)
             connector.addListener {
                 e.presentation.icon = connector.state.icon
                 e.presentation.text = connector.getStateName()
