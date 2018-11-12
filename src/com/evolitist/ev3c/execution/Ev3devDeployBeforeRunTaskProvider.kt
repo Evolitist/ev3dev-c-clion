@@ -38,14 +38,20 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
             s.displayName == CidrBundle.message("build.logToolWindowName", emptyArray<Any>())
         }!!.component as ConsoleViewImpl
         Thread.sleep(500)
+        val file = File("${p1.project.basePath}${Platform.current().fileSeparator}cmake-build-debug${Platform.current().fileSeparator}${p1.project.name}")
+        if (!file.exists()) {
+            console.print("\nCouldn't find file to upload!\n", ConsoleViewContentType.ERROR_OUTPUT)
+            return false
+        }
         console.print("\nSending program to ev3dev device...\n", ConsoleViewContentType.NORMAL_OUTPUT)
         try {
-            sftp.uploadFileOrDir(File("${p1.project.basePath}${Platform.current().fileSeparator}cmake-build-debug${Platform.current().fileSeparator}${p1.project.name}"), "/home/robot", p1.project.name)
+            sftp.uploadFileOrDir(file, "/home/robot", p1.project.name)
             console.print("Setting permissions...\n", ConsoleViewContentType.NORMAL_OUTPUT)
             connector("chmod +x ~/${p1.project.name}").waitFor()
             console.print("File upload complete\n", ConsoleViewContentType.NORMAL_OUTPUT)
         } catch (e: Exception) {
             console.print("Didn't find connected ev3dev device\n", ConsoleViewContentType.ERROR_OUTPUT)
+            return false
         }
         return true
     }
