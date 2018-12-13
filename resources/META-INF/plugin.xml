@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C</name>
-    <version>0.7.2</version>
+    <version>0.7.3</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -21,6 +21,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.7.3</b>
+        <ul>
+            <li>Adapt for CLion 2018.3</li>
+        </ul>
       <b>0.7.2</b>
         <ul>
             <li>Improve connection indicator stability</li>
@@ -60,7 +64,7 @@
     </change-notes>
 
     <!-- build 181 as we need WSL if running on Windows -->
-    <idea-version since-build="CL-182.0"/>
+    <idea-version since-build="CL-183.0"/>
 
     <depends>com.intellij.modules.clion</depends>
 
