@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
-    <name>ev3dev C</name>
-    <version>0.7.3</version>
+    <name>ev3dev C/C++</name>
+    <version>0.8-pre01</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -21,9 +21,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <b>0.7.3</b>
+      <b>0.8</b>
         <ul>
             <li>Adapt for CLion 2018.3</li>
+            <li>Implement ev3dev C++ project support</li>
         </ul>
       <b>0.7.2</b>
         <ul>
@@ -76,6 +77,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <directoryProjectGenerator implementation="com.evolitist.ev3c.generator.Ev3devCProjectGenerator"/>
+        <directoryProjectGenerator implementation="com.evolitist.ev3c.generator.Ev3devCppProjectGenerator"/>
         <configurationType implementation="com.evolitist.ev3c.execution.Ev3devRunConfigurationType"/>
         <stepsBeforeRunProvider implementation="com.evolitist.ev3c.execution.Ev3devDeployBeforeRunTaskProvider"/>
         <toolWindow id="Device Files" icon="AllIcons.Nodes.Folder" anchor="right" secondary="true"

@@ -29,31 +29,31 @@ import java.awt.event.ItemEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class Ev3devCProjectGenerator : CMakeProjectGenerator() {
+class Ev3devCppProjectGenerator : CMakeProjectGenerator() {
     private var usedLibraryType = "static"
 
-    override fun getName() = "ev3dev C program"
+    override fun getName() = "ev3dev C++ program"
 
     override fun getGroupName() = "ev3dev"
 
     override fun getLogo() = Ev3devIcons.EV3
 
     override fun createSourceFiles(projectName: String, projectRootDir: VirtualFile): Array<VirtualFile> = arrayOf(
-            createProjectFileWithContent(projectRootDir, "main.c", "#include <rbc.h>\n\ntask main() {\n\n}")
+            createProjectFileWithContent(projectRootDir, "main.cpp", "#include <rbc.h>\n\ntask main() {\n\n}")
     )
 
     override fun getCMakeFileContent(projectName: String): String {
         val ev3clink = if (usedLibraryType == "static") "libev3dev-c.a" else "ev3dev-c"
         return "cmake_minimum_required(VERSION 3.5.1)\n" +
-                "project($projectName C)\n" +
+                "project($projectName)\n" +
                 "\n" +
                 "include_directories(/usr/local/include)\n" +
                 "link_directories(/usr/local/lib)" +
                 "\n" +
-                "set(CMAKE_C_STANDARD 99)\n" +
-                "set(CMAKE_C_COMPILER arm-linux-gnueabi-gcc)\n" +
+                "set(CMAKE_CXX_STANDARD 14)\n" +
+                "set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++)\n" +
                 "\n" +
-                "add_executable($projectName main.c)\n" +
+                "add_executable($projectName main.cpp)\n" +
                 "target_link_libraries($projectName $ev3clink pthread m)"
     }
 
@@ -75,7 +75,7 @@ class Ev3devCProjectGenerator : CMakeProjectGenerator() {
             override fun reloadingFinished(canceled: Boolean) {
                 if (!canceled) {
                     BASE_PROFILE.modifyProfile {
-                        val psi = PsiManager.getInstance(project).findFile(baseDir.findChild("main.c")!!)!!
+                        val psi = PsiManager.getInstance(project).findFile(baseDir.findChild("main.cpp")!!)!!
                         it.disableTool("EndlessLoop", psi.originalElement)
                     }
 
