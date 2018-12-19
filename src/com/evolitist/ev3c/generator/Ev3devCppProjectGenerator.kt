@@ -39,7 +39,7 @@ class Ev3devCppProjectGenerator : CMakeProjectGenerator() {
     override fun getLogo() = Ev3devIcons.EV3
 
     override fun createSourceFiles(projectName: String, projectRootDir: VirtualFile): Array<VirtualFile> = arrayOf(
-            createProjectFileWithContent(projectRootDir, "main.cpp", "#include <rbc.h>\n\ntask main() {\n\n}")
+            createProjectFileWithContent(projectRootDir, "main.cpp", "#include <rbc.h>\n\nint main() {\n\nreturn 0;\n}")
     )
 
     override fun getCMakeFileContent(projectName: String): String {
