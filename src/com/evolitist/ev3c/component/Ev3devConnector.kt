@@ -14,38 +14,23 @@ import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 class Ev3devConnector(private val project: Project) {
-    private val address = InetAddress.getByName("192.168.0.1")
-    private val conn = ConnectionBuilder("192.168.0.1", 22)
-            .withUsername("robot")
-            .withPassword("maker")
+    private val deviceSelection = AtomicReference(DeviceSelection.EMPTY)
+    @Volatile
+    private var conn: ConnectionBuilder? = null
+    @Volatile
+    var addresses: List<InetAddress> = emptyList()
+        private set
     private val connectorThread = Thread {
-        while (shouldRun) {
-            while (!address.isReachable(250));
-            state = State.CONNECTING
-            fireChangeEvent()
+        var newAddresses: List<InetAddress>
+        while (true) {
             try {
-                sftp = conn.openSftpChannel()
-                stateName = conn.execBuilder("hostname").execute().inputStream.bufferedReader().readLine()
-                state = State.CONNECTED
-                fireChangeEvent()
-                fireSftpUpdateEvent()
-                while (sftp!!.isConnected && address.isReachable(250) && shouldRun);
-                stateName = null
-                if (!sftp!!.isConnected || !address.isReachable(250)) {
-                    state = State.DISCONNECTED
+                newAddresses = InetAddress.getAllByName("ev3dev.local").toList()
+                if (addresses != newAddresses) {
+                    addresses = newAddresses
                     fireChangeEvent()
-                    sftp = null
-                    fireSftpUpdateEvent()
                 }
             } catch (e: Exception) {
-                stateName = null
-                state = State.ERROR
-                fireChangeEvent()
-                sftp = null
-                fireSftpUpdateEvent()
-                Thread.sleep(2000)
-                state = State.DISCONNECTED
-                fireChangeEvent()
+                Thread.sleep(100)
             }
         }
     }
@@ -68,6 +53,25 @@ class Ev3devConnector(private val project: Project) {
 
     init {
         connectorThread.start()
+    }
+
+    fun getConnectedDevices(): Collection<InetAddress> {
+        return deviceSelection.get().devices
+    }
+
+    fun getSelectedDevice(): InetAddress? {
+        return deviceSelection.get().selection
+    }
+
+    fun setSelectedDevice(device: InetAddress?) {
+        deviceSelection.updateAndGet { old -> old.withSelection(device?.hostAddress) }
+        fireChangeEvent()
+    }
+
+    @Synchronized
+    private fun refreshDeviceSelection() {
+        deviceSelection.updateAndGet { old -> old.withDevices(addresses) }
+        fireChangeEvent()
     }
 
     fun dispose() {
@@ -121,7 +125,7 @@ class Ev3devConnector(private val project: Project) {
     fun getStateName() = stateName ?: state.title
 
     operator fun invoke(command: String, timeout: Int = 0): SshExecProcess {
-        return conn.execBuilder(command).execute(timeout)
+        return conn!!.execBuilder(command).execute(timeout)
     }
 
     enum class State(val icon: Icon, val title: String) {
@@ -134,5 +138,26 @@ class Ev3devConnector(private val project: Project) {
     companion object {
         @JvmStatic
         fun getInstance(project: Project): Ev3devConnector = ServiceManager.getService(project, Ev3devConnector::class.java)
+    }
+}
+
+internal class DeviceSelection private constructor(val devices: List<InetAddress>, val selection: InetAddress?) {
+    fun withDevices(newDevices: List<InetAddress>): DeviceSelection {
+        val selectedId = selection?.hostAddress
+        val selectedDevice = findById(newDevices, selectedId)
+        val selectionOrDefault = selectedDevice.orElse(if (newDevices.isNotEmpty()) newDevices[0] else null)
+        return DeviceSelection(List(newDevices.size) { newDevices[it] }, selectionOrDefault)
+    }
+
+    fun withSelection(id: String?): DeviceSelection {
+        return DeviceSelection(devices, findById(devices, id).orElse(selection))
+    }
+
+    companion object {
+        val EMPTY = DeviceSelection(listOf(), null)
+
+        private fun findById(candidates: List<InetAddress>, id: String?): Optional<InetAddress> {
+            return if (id == null) Optional.empty() else candidates.stream().filter { d -> d.hostAddress == id }.findFirst()
+        }
     }
 }
