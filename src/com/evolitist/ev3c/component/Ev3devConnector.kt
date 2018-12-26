@@ -4,9 +4,12 @@ import com.google.common.collect.ImmutableSet
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ssh.channels.SftpChannel
 import com.intellij.ssh.process.SshExecProcess
+import java.net.Inet4Address
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -22,15 +25,17 @@ class Ev3devConnector(private val project: Project) {
         private set
     private val connectorThread = Thread {
         var newAddresses: List<InetAddress>
-        while (true) {
+        while (shouldRun) {
             try {
                 newAddresses = InetAddress.getAllByName("ev3dev.local").toList()
                 if (addresses != newAddresses) {
                     addresses = newAddresses
-                    fireChangeEvent()
+                    refreshDeviceSelection()
                 }
             } catch (e: Exception) {
-                Thread.sleep(100)
+
+            } finally {
+                Thread.sleep(1000)
             }
         }
     }
@@ -142,7 +147,21 @@ class Ev3devConnector(private val project: Project) {
 }
 
 internal class DeviceSelection private constructor(val devices: List<InetAddress>, val selection: InetAddress?) {
-    fun withDevices(newDevices: List<InetAddress>): DeviceSelection {
+    val sftpChannel: SftpChannel? by lazy {
+        if (selection != null)
+            ConnectionBuilder(selection.hostAddress, 22)
+                    .withUsername("robot")
+                    .withPassword("maker")
+                    .openSftpChannel()
+        else
+            null
+    }
+
+    fun withDevices(newList: List<InetAddress>): DeviceSelection {
+        val newDevices = if (SystemInfo.isWindows)
+            newList.filter { it is Inet6Address }
+        else
+            newList.filter { it is Inet4Address }
         val selectedId = selection?.hostAddress
         val selectedDevice = findById(newDevices, selectedId)
         val selectionOrDefault = selectedDevice.orElse(if (newDevices.isNotEmpty()) newDevices[0] else null)

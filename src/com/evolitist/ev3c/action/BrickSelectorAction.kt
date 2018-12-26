@@ -57,7 +57,7 @@ class BrickSelectorAction : ComboBoxAction() {
     private fun update(project: Project, presentation: Presentation) {
         actions.clear()
         val service = Ev3devConnector.getInstance(project)
-        val devices = service.addresses
+        val devices = service.getConnectedDevices()
         devices.forEach {
             actions.add(Ev3devDeviceAction(it))
         }
@@ -68,17 +68,16 @@ class BrickSelectorAction : ComboBoxAction() {
         actions.add(Ev3devManualAddAction())
         selectedDeviceAction = null
         val selectedDevice = service.getSelectedDevice()
-        for (action in actions) {
-            if (action is Ev3devDeviceAction) {
-                if (Objects.equals(action.device, selectedDevice)) {
+        actions.asSequence()
+                .filterIsInstance(Ev3devDeviceAction::class.java)
+                .filter { it.device == selectedDevice }
+                .forEach { action ->
                     selectedDeviceAction = action
                     val template = action.templatePresentation
                     presentation.icon = template.icon
-                    presentation.text = action.deviceName()
+                    presentation.text = action.device.canonicalHostName
                     presentation.isEnabled = true
                     return
-                }
-            }
         }
         if (devices.isEmpty()) {
             presentation.text = "<no devices>"
