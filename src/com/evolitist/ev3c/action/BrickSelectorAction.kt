@@ -81,6 +81,7 @@ class BrickSelectorAction : ComboBoxAction() {
         }
         if (devices.isEmpty()) {
             presentation.text = "<no devices>"
+            presentation.icon = null
         } else {
             presentation.text = null
         }
@@ -103,6 +104,7 @@ class BrickSelectorAction : ComboBoxAction() {
     private class Ev3devEmptyAction internal constructor(message: String) : AnAction(message, null, null), AnAction.TransparentUpdate {
         init {
             templatePresentation.isEnabled = false
+            templatePresentation.isVisible = false
         }
 
         override fun actionPerformed(p0: AnActionEvent) {}

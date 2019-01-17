@@ -23,14 +23,15 @@ class Ev3devConnector(private val project: Project) {
     @Volatile
     var addresses: List<InetAddress> = emptyList()
         private set
+    //private val watchlist: List<InetAddress> = mutableListOf()
     private val connectorThread = Thread {
         var newAddresses: List<InetAddress>
         while (shouldRun) {
             try {
-                newAddresses = InetAddress.getAllByName("ev3dev.local").toList()
+                newAddresses = InetAddress.getAllByName("ev3dev.local").filter { it.isReachable(100) }
                 if (addresses != newAddresses) {
                     addresses = newAddresses
-                    refreshDeviceSelection()
+                    refreshDeviceSelection(addresses)
                 }
             } catch (e: Exception) {
 
@@ -74,7 +75,7 @@ class Ev3devConnector(private val project: Project) {
     }
 
     @Synchronized
-    private fun refreshDeviceSelection() {
+    private fun refreshDeviceSelection(addresses: List<InetAddress>) {
         deviceSelection.updateAndGet { old -> old.withDevices(addresses) }
         fireChangeEvent()
     }
