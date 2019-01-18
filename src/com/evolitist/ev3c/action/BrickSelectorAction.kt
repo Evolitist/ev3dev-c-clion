@@ -6,23 +6,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace
 import com.jetbrains.cidr.cpp.execution.CMakeAppRunConfiguration
+import icons.Ev3devIcons
+import java.net.InetAddress
 import java.util.*
 import java.util.Collections.synchronizedList
 import javax.swing.JComponent
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import icons.Ev3devIcons
-import java.net.InetAddress
-import sun.audio.AudioDevice.device
-import sun.audio.AudioDevice.device
 
 class BrickSelectorAction : ComboBoxAction() {
     private val knownProjects = synchronizedList(ArrayList<Project>())
     private var selectedDeviceAction: Ev3devDeviceAction? = null
-    val actions: MutableList<AnAction> = mutableListOf()
+    private val actions: MutableList<AnAction> = mutableListOf()
 
     override fun createPopupActionGroup(p0: JComponent?): DefaultActionGroup {
         return DefaultActionGroup(actions)
@@ -66,8 +63,11 @@ class BrickSelectorAction : ComboBoxAction() {
         }
         actions.add(Separator())
         actions.add(Ev3devManualAddAction())
-        selectedDeviceAction = null
         val selectedDevice = service.getSelectedDevice()
+        if (selectedDevice != selectedDeviceAction?.device) {
+            service.connectTo(selectedDevice)
+        }
+        selectedDeviceAction = null
         actions.asSequence()
                 .filterIsInstance(Ev3devDeviceAction::class.java)
                 .filter { it.device == selectedDevice }
@@ -89,12 +89,13 @@ class BrickSelectorAction : ComboBoxAction() {
 
     override fun displayTextInToolbar() = true
     override fun useSmallerFontForTextInToolbar() = true
+    override fun shouldShowDisabledActions() = true
+
+    override fun getPreselectCondition(): Condition<AnAction> {
+        return Condition { action -> action == selectedDeviceAction }
+    }
 
     internal class Ev3devDeviceAction(val device: InetAddress) : AnAction("${device.hostName} (${device.hostAddress})", null, Ev3devIcons.EV3) {
-        fun deviceName(): String {
-            return "${device.hostName} (${device.hostAddress})"
-        }
-
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
             Ev3devConnector.getInstance(project).setSelectedDevice(device)
@@ -104,7 +105,6 @@ class BrickSelectorAction : ComboBoxAction() {
     private class Ev3devEmptyAction internal constructor(message: String) : AnAction(message, null, null), AnAction.TransparentUpdate {
         init {
             templatePresentation.isEnabled = false
-            templatePresentation.isVisible = false
         }
 
         override fun actionPerformed(p0: AnActionEvent) {}

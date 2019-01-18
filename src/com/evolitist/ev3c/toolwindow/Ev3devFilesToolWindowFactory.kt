@@ -56,7 +56,7 @@ class Ev3devFilesToolWindowFactory : ToolWindowFactory {
                     conn.fireSftpUpdateEvent()
                 },
                 Separator(),
-                iconAction(AllIcons.Actions.GC, "Delete") { _ ->
+                iconAction(AllIcons.Actions.GC, "Delete") {
                     if (tree.selectionCount == 0) return@iconAction
                     val model = tree.model as DefaultTreeModel
                     tree.selectionPaths

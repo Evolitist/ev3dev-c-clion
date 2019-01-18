@@ -1,8 +1,10 @@
 package com.evolitist.ev3c.component
 
 import com.google.common.collect.ImmutableSet
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ssh.ConnectionBuilder
@@ -13,7 +15,6 @@ import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 class Ev3devConnector(private val project: Project) {
@@ -23,7 +24,6 @@ class Ev3devConnector(private val project: Project) {
     @Volatile
     var addresses: List<InetAddress> = emptyList()
         private set
-    //private val watchlist: List<InetAddress> = mutableListOf()
     private val connectorThread = Thread {
         var newAddresses: List<InetAddress>
         while (shouldRun) {
@@ -45,14 +45,8 @@ class Ev3devConnector(private val project: Project) {
     private var shouldRun = true
 
     @Volatile
-    private var stateName: String? = null
-
-    @Volatile
     var sftp: SftpChannel? = null
         private set
-
-    @Volatile
-    var state = State.DISCONNECTED
 
     private val listeners = AtomicReference(ImmutableSet.of<() -> Unit>())
     private val sftpListeners = AtomicReference(ImmutableSet.of<(SftpChannel?) -> Unit>())
@@ -78,6 +72,23 @@ class Ev3devConnector(private val project: Project) {
     private fun refreshDeviceSelection(addresses: List<InetAddress>) {
         deviceSelection.updateAndGet { old -> old.withDevices(addresses) }
         fireChangeEvent()
+    }
+
+    fun connectTo(device: InetAddress?) {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Connecting...", false) {
+            override fun run(p0: ProgressIndicator) {
+                if (device != null) {
+                    conn = ConnectionBuilder(device.hostAddress, 22)
+                            .withUsername("robot")
+                            .withPassword("maker")
+                    sftp = conn!!.openSftpChannel()
+                } else {
+                    sftp = null
+                    conn = null
+                }
+                fireSftpUpdateEvent()
+            }
+        })
     }
 
     fun dispose() {
@@ -128,17 +139,8 @@ class Ev3devConnector(private val project: Project) {
         }
     }
 
-    fun getStateName() = stateName ?: state.title
-
     operator fun invoke(command: String, timeout: Int = 0): SshExecProcess {
         return conn!!.execBuilder(command).execute(timeout)
-    }
-
-    enum class State(val icon: Icon, val title: String) {
-        DISCONNECTED(AllIcons.RunConfigurations.TestIgnored, "<no device>"),
-        CONNECTING(AllIcons.RunConfigurations.TestNotRan, "<connecting>"),
-        CONNECTED(AllIcons.RunConfigurations.TestPassed, "<unknown>"),
-        ERROR(AllIcons.RunConfigurations.TestError, "<error>");
     }
 
     companion object {
@@ -148,16 +150,6 @@ class Ev3devConnector(private val project: Project) {
 }
 
 internal class DeviceSelection private constructor(val devices: List<InetAddress>, val selection: InetAddress?) {
-    val sftpChannel: SftpChannel? by lazy {
-        if (selection != null)
-            ConnectionBuilder(selection.hostAddress, 22)
-                    .withUsername("robot")
-                    .withPassword("maker")
-                    .openSftpChannel()
-        else
-            null
-    }
-
     fun withDevices(newList: List<InetAddress>): DeviceSelection {
         val newDevices = if (SystemInfo.isWindows)
             newList.filter { it is Inet6Address }

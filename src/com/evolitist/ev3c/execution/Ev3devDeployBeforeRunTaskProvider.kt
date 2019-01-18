@@ -31,7 +31,6 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
 
     override fun executeTask(p0: DataContext?, p1: RunConfiguration, p2: ExecutionEnvironment, p3: Ev3devDeployBeforeRunTask): Boolean {
         val connector = Ev3devConnector.getInstance(p1.project)
-        val sftp = connector.sftp ?: return false
         val messagesWindow = ToolWindowManager.getInstance(p1.project).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
         val contents = messagesWindow.contentManager
         val console = ContainerUtil.find(contents.contents) { s ->
@@ -45,10 +44,14 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
         }
         console.print("\nSending program to ev3dev device...\n", ConsoleViewContentType.NORMAL_OUTPUT)
         try {
+            val sftp = connector.sftp ?: throw RuntimeException()
             sftp.uploadFileOrDir(file, "/home/robot", p1.project.name)
             console.print("Setting permissions...\n", ConsoleViewContentType.NORMAL_OUTPUT)
             connector("chmod +x ~/${p1.project.name}").waitFor()
             console.print("File upload complete\n", ConsoleViewContentType.NORMAL_OUTPUT)
+        } catch (e: RuntimeException) {
+            console.print("Connection problems, please reconnect your device\n", ConsoleViewContentType.ERROR_OUTPUT)
+            return false
         } catch (e: Exception) {
             console.print("Didn't find connected ev3dev device\n", ConsoleViewContentType.ERROR_OUTPUT)
             return false

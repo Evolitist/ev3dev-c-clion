@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ssh.ConnectionBuilder
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.cidr.CidrBundle
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace
@@ -34,7 +33,6 @@ class DeployProgramAction : CMakeTargetAction("Deploy", null, AllIcons.Nodes.Dep
         runAsync {
             val connector = Ev3devConnector.getInstance(p0)
             connector.getSelectedDevice() ?: return@runAsync
-            //val sftp = connector.getSelectedDeviceSftp() ?: return@runAsync
             CMakeBuild.build(p0, p1).get()
             val messagesWindow = ToolWindowManager.getInstance(p0).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
             val contents = messagesWindow.contentManager
@@ -49,14 +47,13 @@ class DeployProgramAction : CMakeTargetAction("Deploy", null, AllIcons.Nodes.Dep
             }
             console.print("\nSending program to ev3dev device...\n", ConsoleViewContentType.NORMAL_OUTPUT)
             try {
-                val sftp = ConnectionBuilder(connector.getSelectedDevice()!!.hostAddress, 22)
-                        .withUsername("robot")
-                        .withPassword("maker")
-                        .openSftpChannel()
+                val sftp = connector.sftp ?: throw RuntimeException()
                 sftp.uploadFileOrDir(File("${p0.basePath}${Platform.current().fileSeparator}cmake-build-debug${Platform.current().fileSeparator}${p0.name}"), "/home/robot", p0.name)
                 console.print("Setting permissions...\n", ConsoleViewContentType.NORMAL_OUTPUT)
-                //connector("chmod +x ~/${p0.name}").waitFor()
+                connector("chmod +x ~/${p0.name}").waitFor()
                 console.print("File upload complete\n", ConsoleViewContentType.NORMAL_OUTPUT)
+            } catch (e: RuntimeException) {
+                console.print("Connection problems, please reconnect your device\n", ConsoleViewContentType.ERROR_OUTPUT)
             } catch (e: Exception) {
                 console.print("Didn't find connected ev3dev device\n", ConsoleViewContentType.ERROR_OUTPUT)
             }
