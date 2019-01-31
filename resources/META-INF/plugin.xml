@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C/C++</name>
-    <version>0.8-pre01</version>
+    <version>0.8</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -25,6 +25,7 @@
         <ul>
             <li>Adapt for CLion 2018.3</li>
             <li>Implement ev3dev C++ project support</li>
+            <li>Rework connected device indicator & connection manager</li>
         </ul>
       <b>0.7.2</b>
         <ul>
@@ -64,8 +65,7 @@
     ]]>
     </change-notes>
 
-    <!-- build 181 as we need WSL if running on Windows -->
-    <idea-version since-build="CL-183.0"/>
+    <idea-version since-build="CL-183.0" until-build="CL-190.0"/>
 
     <depends>com.intellij.modules.clion</depends>
 
@@ -104,9 +104,4 @@
 
     </actions>
 
-    <!--<project-components>
-        <component>
-            <implementation-class>com.evolitist.ev3c.MakeWorkspace</implementation-class>
-        </component>
-    </project-components>-->
 </idea-plugin>
