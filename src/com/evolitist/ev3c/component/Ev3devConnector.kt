@@ -6,12 +6,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ssh.channels.SftpChannel
 import com.intellij.ssh.process.SshExecProcess
 import java.net.Inet4Address
-import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -22,16 +20,20 @@ class Ev3devConnector(private val project: Project) {
     @Volatile
     private var conn: ConnectionBuilder? = null
     @Volatile
-    var addresses: List<InetAddress> = emptyList()
+    var addresses: Set<InetAddress> = setOf(InetAddress.getByAddress(byteArrayOf(192.toByte(), 168.toByte(), 0, 1)))
+        private set
+    @Volatile
+    var reachableAddresses: Set<InetAddress> = mutableSetOf()
         private set
     private val connectorThread = Thread {
-        var newAddresses: List<InetAddress>
+        var newAddresses: Set<InetAddress>
         while (shouldRun) {
             try {
-                newAddresses = InetAddress.getAllByName("ev3dev.local").filter { it.isReachable(100) }
-                if (addresses != newAddresses) {
-                    addresses = newAddresses
-                    refreshDeviceSelection(addresses)
+                addresses = addresses + InetAddress.getAllByName("ev3dev.local")
+                newAddresses = addresses.filter { it.isReachable(50) }.toSet()
+                if (reachableAddresses != newAddresses) {
+                    reachableAddresses = newAddresses
+                    refreshDeviceSelection(reachableAddresses.sortedBy { it.hostAddress })
                 }
             } catch (e: Exception) {
 
@@ -150,15 +152,12 @@ class Ev3devConnector(private val project: Project) {
 }
 
 internal class DeviceSelection private constructor(val devices: List<InetAddress>, val selection: InetAddress?) {
-    fun withDevices(newList: List<InetAddress>): DeviceSelection {
-        val newDevices = if (SystemInfo.isWindows)
-            newList.filter { it is Inet6Address }
-        else
-            newList.filter { it is Inet4Address }
+    fun withDevices(newDevices: List<InetAddress>): DeviceSelection {
+        val newList = newDevices.filter { it is Inet4Address }
         val selectedId = selection?.hostAddress
-        val selectedDevice = findById(newDevices, selectedId)
-        val selectionOrDefault = selectedDevice.orElse(if (newDevices.isNotEmpty()) newDevices[0] else null)
-        return DeviceSelection(List(newDevices.size) { newDevices[it] }, selectionOrDefault)
+        val selectedDevice = findById(newList, selectedId)
+        val selectionOrDefault = selectedDevice.orElse(if (newList.isNotEmpty()) newList[0] else null)
+        return DeviceSelection(List(newList.size) { newList[it] }, selectionOrDefault)
     }
 
     fun withSelection(id: String?): DeviceSelection {

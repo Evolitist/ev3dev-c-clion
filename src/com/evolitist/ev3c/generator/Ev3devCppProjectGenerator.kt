@@ -54,7 +54,7 @@ class Ev3devCppProjectGenerator : CMakeProjectGenerator() {
                 "set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++)\n" +
                 "\n" +
                 "add_executable($projectName main.cpp)\n" +
-                "target_link_libraries($projectName $ev3clink pthread m)"
+                "target_link_libraries($projectName $ev3clink pthread m libstdc++.a)"
     }
 
     override fun generateProject(project: Project, baseDir: VirtualFile, settings: CMakeProjectSettings, module: Module) {

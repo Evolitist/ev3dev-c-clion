@@ -108,7 +108,7 @@ private fun connectionBuilder(receiver: RemoteCredentials, project: Project?): C
     val remoteProcessUserInfo = RemoteProcessUserInfo(connectionOwnerWithDialogMessages, receiver, null)
     return ConnectionBuilder(receiver.host, receiver.port)
             .withUsername(receiver.userName)
-            .withUserInfo(remoteProcessUserInfo)
+            .withSshPasswordProvider(remoteProcessUserInfo)
             .withPassword(receiver.password)
             .withIgnoreAuthAgent(true)
 }

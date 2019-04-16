@@ -29,7 +29,7 @@ class Ev3devDeployBeforeRunTaskProvider : BeforeRunTaskProvider<Ev3devDeployBefo
 
     override fun isConfigurable() = false
 
-    override fun executeTask(p0: DataContext?, p1: RunConfiguration, p2: ExecutionEnvironment, p3: Ev3devDeployBeforeRunTask): Boolean {
+    override fun executeTask(p0: DataContext, p1: RunConfiguration, p2: ExecutionEnvironment, p3: Ev3devDeployBeforeRunTask): Boolean {
         val connector = Ev3devConnector.getInstance(p1.project)
         val messagesWindow = ToolWindowManager.getInstance(p1.project).getToolWindow(ToolWindowId.MESSAGES_WINDOW)
         val contents = messagesWindow.contentManager

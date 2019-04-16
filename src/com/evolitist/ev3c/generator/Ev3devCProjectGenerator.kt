@@ -84,7 +84,7 @@ class Ev3devCProjectGenerator : CMakeProjectGenerator() {
                     val runConfHelper = CMakeRunConfigurationType.getHelper(project)
                     runConfHelper.targets.forEach {
                         val buildTargetData = BuildTargetData(it)
-                        val runAndConfSettings = runManager.createRunConfiguration(it.name, Ev3devRunConfigurationType.getInstance().factory)
+                        val runAndConfSettings = runManager.createConfiguration(it.name, Ev3devRunConfigurationType.getInstance().factory)
                         with(runAndConfSettings.configuration as Ev3devRunConfiguration) {
                             targetAndConfigurationData = BuildTargetAndConfigurationData(buildTargetData, runConfHelper.getDefaultConfiguration(it)?.name)
                             if (it.isExecutable) {

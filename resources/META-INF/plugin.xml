@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.evolitist.ev3c</id>
     <name>ev3dev C/C++</name>
-    <version>0.8</version>
+    <version>0.8.1</version>
     <vendor email="evolitist@gmail.com">Evolitist</vendor>
 
     <description><![CDATA[
@@ -21,6 +21,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>0.8.1</b>
+        <ul>
+            <li>Adapt for CLion 2019.1</li>
+            <li>Make ev3dev C++ projects use static libstdc++ for compatibility purposes</li>
+            <li>Stabilize connection manager by adding a pre-defined tethering address</li>
+            <li>Allow installing ev3dev-C library from local file</li>
+        </ul>
       <b>0.8</b>
         <ul>
             <li>Adapt for CLion 2018.3</li>
@@ -65,7 +72,7 @@
     ]]>
     </change-notes>
 
-    <idea-version since-build="CL-183.0" until-build="CL-190.0"/>
+    <idea-version since-build="CL-190.0" until-build="CL-192.0"/>
 
     <depends>com.intellij.modules.clion</depends>
 
@@ -93,6 +100,8 @@
                     text="Install host library"/>
             <action class="com.evolitist.ev3c.action.DeployEv3devCLibraryAction" id="DeployEv3devCLib"
                     text="Deploy library to robot"/>
+            <action class="com.evolitist.ev3c.action.InstallFromFileAction" id="InstallFromFile"
+                    text="Install library from file..."/>
         </group>
 
         <group id="Ev3devTools.Run">

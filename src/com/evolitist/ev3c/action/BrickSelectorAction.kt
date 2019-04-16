@@ -75,7 +75,7 @@ class BrickSelectorAction : ComboBoxAction() {
                     selectedDeviceAction = action
                     val template = action.templatePresentation
                     presentation.icon = template.icon
-                    presentation.text = action.device.canonicalHostName
+                    presentation.text = action.device.hostAddress//action.device.hostName.split(".")[0]
                     presentation.isEnabled = true
                     return
         }
