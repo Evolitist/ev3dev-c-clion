@@ -21,7 +21,7 @@ import org.jetbrains.concurrency.runAsync
 import java.io.File
 
 class DeployProgramAction : CMakeTargetAction("Deploy", null, AllIcons.Nodes.Deploy) {
-    private fun isProjectCompatible(project: Project?) = PropertiesComponent.getInstance(project).getValue("ev3cLibraryType") != null
+    private fun isProjectCompatible(project: Project) = PropertiesComponent.getInstance(project).getValue("ev3cLibraryType") != null
 
     override fun update(e: AnActionEvent) {
         val project = AnAction.getEventProject(e)

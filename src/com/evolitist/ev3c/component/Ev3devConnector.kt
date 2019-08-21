@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ssh.channels.SftpChannel
 import com.intellij.ssh.process.SshExecProcess
-import java.net.Inet4Address
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -153,11 +152,11 @@ class Ev3devConnector(private val project: Project) {
 
 internal class DeviceSelection private constructor(val devices: List<InetAddress>, val selection: InetAddress?) {
     fun withDevices(newDevices: List<InetAddress>): DeviceSelection {
-        val newList = newDevices.filter { it is Inet4Address }
+        //val newList = newDevices.filter { it is Inet4Address }
         val selectedId = selection?.hostAddress
-        val selectedDevice = findById(newList, selectedId)
-        val selectionOrDefault = selectedDevice.orElse(if (newList.isNotEmpty()) newList[0] else null)
-        return DeviceSelection(List(newList.size) { newList[it] }, selectionOrDefault)
+        val selectedDevice = findById(newDevices, selectedId)
+        val selectionOrDefault = selectedDevice.orElse(if (newDevices.isNotEmpty()) newDevices[0] else null)
+        return DeviceSelection(List(newDevices.size) { newDevices[it] }, selectionOrDefault)
     }
 
     fun withSelection(id: String?): DeviceSelection {

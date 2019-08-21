@@ -90,7 +90,7 @@ class Ev3devRunConfiguration(project: Project, factory: ConfigurationFactory, na
 fun createRemoteProcess(generalCommandLine: GeneralCommandLine, remoteCredentials: RemoteCredentials): ColoredRemoteProcessHandler<*> {
     try {
         val start = ProcessBuilder(
-                connectionBuilder(remoteCredentials, null),
+                connectionBuilder(remoteCredentials),
                 generalCommandLine)
                 .withAllocatePty(true)
                 .withChangeDir(true)
@@ -103,8 +103,8 @@ fun createRemoteProcess(generalCommandLine: GeneralCommandLine, remoteCredential
     }
 }
 
-private fun connectionBuilder(receiver: RemoteCredentials, project: Project?): ConnectionBuilder {
-    val connectionOwnerWithDialogMessages = ConnectionOwnerFactory.createConnectionOwnerWithDialogMessages(project)
+private fun connectionBuilder(receiver: RemoteCredentials): ConnectionBuilder {
+    val connectionOwnerWithDialogMessages = ConnectionOwnerFactory.createConnectionOwnerWithDialogMessages(null)
     val remoteProcessUserInfo = RemoteProcessUserInfo(connectionOwnerWithDialogMessages, receiver, null)
     return ConnectionBuilder(receiver.host, receiver.port)
             .withUsername(receiver.userName)

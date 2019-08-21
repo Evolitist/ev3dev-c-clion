@@ -43,28 +43,26 @@ fun File.translateToWSL(): String {
 fun defaultLibLocation(): String {
     return when (OSType.getCurrent()) {
         OSType.WIN -> {
-            val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet
-            when (toolchain) {
-                is WSL -> "/usr/arm-linux-gnueabi/lib"
+            when (val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet) {
+                is WSL -> "/usr/local/lib"
                 is MinGW -> "${toolchain.homePath}\\arm-ev3dev-linux-gnueabi\\lib"
                 else -> ""
             }
         }
-        else -> "/usr/arm-linux-gnueabi/lib"
+        else -> "/usr/local/lib"
     }
 }
 
 fun defaultIncludeLocation(): String {
     return when (OSType.getCurrent()) {
         OSType.WIN -> {
-            val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet
-            when (toolchain) {
-                is WSL -> "/usr/arm-linux-gnueabi/include/ev3dev"
+            when (val toolchain = CPPToolchains.getInstance().defaultToolchain?.toolSet) {
+                is WSL -> "/usr/local/lib"
                 is MinGW -> "${toolchain.homePath}\\arm-ev3dev-linux-gnueabi\\include\\ev3dev"
                 else -> ""
             }
         }
-        else -> "/usr/arm-linux-gnueabi/include/ev3dev"
+        else -> "/usr/local/include"
     }
 }
 

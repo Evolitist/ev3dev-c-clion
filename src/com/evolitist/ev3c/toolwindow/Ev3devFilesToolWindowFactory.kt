@@ -69,7 +69,7 @@ class Ev3devFilesToolWindowFactory : ToolWindowFactory {
                             }
                 }
         )
-        panel.setToolbar(ActionManager.getInstance().createActionToolbar("TB", toolbar, true).component)
+        panel.toolbar = ActionManager.getInstance().createActionToolbar("TB", toolbar, true).component
         return panel
     }
 
@@ -128,7 +128,7 @@ class Ev3devFilesToolWindowFactory : ToolWindowFactory {
     }
 
     class SftpFile(private val file: RemoteFileObject) : Comparable<SftpFile> {
-        fun exists() = file.exists()
+        //fun exists() = file.exists()
         fun isDir() = file.isDir()
         fun list() = file.list()
         fun rm() = file.rm()

@@ -102,7 +102,7 @@ class BrickSelectorAction : ComboBoxAction() {
         }
     }
 
-    private class Ev3devEmptyAction internal constructor(message: String) : AnAction(message, null, null), AnAction.TransparentUpdate {
+    private class Ev3devEmptyAction internal constructor(message: String) : AnAction(message, null, null), TransparentUpdate {
         init {
             templatePresentation.isEnabled = false
         }

@@ -28,7 +28,8 @@ class DeployEv3devCLibraryAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = "static" != PropertiesComponent.getInstance(e.project).getValue("ev3cLibraryType", "shared")
+        val project = e.project ?: return
+        e.presentation.isEnabledAndVisible = "static" != PropertiesComponent.getInstance(project).getValue("ev3cLibraryType", "shared")
     }
 
     class DeployLibraryTask(project: Project?) : Task.Backgroundable(project, "Deploying library...", true, PerformInBackgroundOption.DEAF) {
