@@ -1,10 +1,9 @@
-.idea/
-
 *.ipr
 *.iws
 
-/out/
+/build/
 /*.jar
+/*.zip
 
 Thumbs.db
 *.DS_Store
