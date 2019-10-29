@@ -34,7 +34,8 @@ class InstallCLibraryAction : AnAction() {
         //TODO: launch some sort of a "library selection wizard"
         if (CPPToolchains.getInstance().defaultToolchain?.toolSet is Cygwin ||
                 CPPToolchains.getInstance().defaultToolchain?.toolSet is MSVC) {
-            val statusBar = WindowManager.getInstance().getStatusBar(event.project)
+            val project = event.project ?: return
+            val statusBar = WindowManager.getInstance().getStatusBar(project)
             ApplicationManager.getApplication().invokeLater {
                 JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
                         "Unsupported OS/toolchain!", null, JBColor(0xEE4A4A, 0x412E33), null

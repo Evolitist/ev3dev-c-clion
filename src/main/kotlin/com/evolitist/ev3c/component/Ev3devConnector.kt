@@ -12,9 +12,13 @@ import com.intellij.ssh.process.SshExecProcess
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import javax.jmdns.JmDNS
+import javax.jmdns.ServiceEvent
+import javax.jmdns.ServiceListener
 import javax.swing.SwingUtilities
 
 class Ev3devConnector(private val project: Project) {
+    private val jmdns = JmDNS.create(InetAddress.getLocalHost())
     private val deviceSelection = AtomicReference(DeviceSelection.EMPTY)
     @Volatile
     private var conn: ConnectionBuilder? = null
@@ -53,7 +57,21 @@ class Ev3devConnector(private val project: Project) {
     private val sftpListeners = AtomicReference(ImmutableSet.of<(SftpChannel?) -> Unit>())
 
     init {
-        connectorThread.start()
+        //connectorThread.start()
+        jmdns.addServiceListener("_sftp-ssh._tcp", object : ServiceListener {
+            override fun serviceResolved(event: ServiceEvent?) {
+                event ?: return
+                println("resolved " + event.name)
+            }
+
+            override fun serviceRemoved(event: ServiceEvent?) {
+            }
+
+            override fun serviceAdded(event: ServiceEvent?) {
+                event ?: return
+                println("added " + event.name)
+            }
+        })
     }
 
     fun getConnectedDevices(): Collection<InetAddress> {
