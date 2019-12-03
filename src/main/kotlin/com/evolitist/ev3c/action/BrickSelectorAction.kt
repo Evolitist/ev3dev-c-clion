@@ -35,25 +35,27 @@ class BrickSelectorAction : ComboBoxAction() {
         val check = PropertiesComponent.getInstance(project).getValue("ev3cLibraryType")
         e.presentation.isVisible = CMakeWorkspace.getInstance(project).isInitialized && check != null
         if (check != null) {
-            Ev3devConnector.getInstance(project)
+            Ev3devConnector.getInstance()
         }
         if (!knownProjects.contains(project)) {
             knownProjects += project
             Disposer.register(project, Disposable {
                 knownProjects -= project
-                Ev3devConnector.getInstance(project).dispose()
+                if (knownProjects.isEmpty()) {
+                    Ev3devConnector.getInstance().dispose()
+                }
             })
-            val connector = Ev3devConnector.getInstance(project)
+            val connector = Ev3devConnector.getInstance()
             connector.addListener {
-                update(project, e.presentation)
+                update(e.presentation)
             }
-            update(project, e.presentation)
+            update(e.presentation)
         }
     }
 
-    private fun update(project: Project, presentation: Presentation) {
+    private fun update(presentation: Presentation) {
         actions.clear()
-        val service = Ev3devConnector.getInstance(project)
+        val service = Ev3devConnector.getInstance()
         val devices = service.getConnectedDevices()
         devices.forEach {
             actions.add(Ev3devDeviceAction(it))
@@ -97,8 +99,7 @@ class BrickSelectorAction : ComboBoxAction() {
 
     internal class Ev3devDeviceAction(val device: InetAddress) : AnAction("${device.hostName} (${device.hostAddress})", null, Ev3devIcons.EV3) {
         override fun actionPerformed(e: AnActionEvent) {
-            val project = e.project ?: return
-            Ev3devConnector.getInstance(project).setSelectedDevice(device)
+            Ev3devConnector.getInstance().setSelectedDevice(device)
         }
     }
 

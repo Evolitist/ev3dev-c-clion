@@ -5,20 +5,16 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
 import com.intellij.ssh.ConnectionBuilder
+import com.intellij.ssh.SshPasswordProvider
 import com.intellij.ssh.channels.SftpChannel
 import com.intellij.ssh.process.SshExecProcess
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import javax.jmdns.JmDNS
-import javax.jmdns.ServiceEvent
-import javax.jmdns.ServiceListener
 import javax.swing.SwingUtilities
 
-class Ev3devConnector(private val project: Project) {
-    private val jmdns = JmDNS.create(InetAddress.getLocalHost())
+class Ev3devConnector {
     private val deviceSelection = AtomicReference(DeviceSelection.EMPTY)
     @Volatile
     private var conn: ConnectionBuilder? = null
@@ -57,21 +53,9 @@ class Ev3devConnector(private val project: Project) {
     private val sftpListeners = AtomicReference(ImmutableSet.of<(SftpChannel?) -> Unit>())
 
     init {
-        //connectorThread.start()
-        jmdns.addServiceListener("_sftp-ssh._tcp", object : ServiceListener {
-            override fun serviceResolved(event: ServiceEvent?) {
-                event ?: return
-                println("resolved " + event.name)
-            }
-
-            override fun serviceRemoved(event: ServiceEvent?) {
-            }
-
-            override fun serviceAdded(event: ServiceEvent?) {
-                event ?: return
-                println("added " + event.name)
-            }
-        })
+        if (!connectorThread.isAlive) {
+            connectorThread.start()
+        }
     }
 
     fun getConnectedDevices(): Collection<InetAddress> {
@@ -94,18 +78,56 @@ class Ev3devConnector(private val project: Project) {
     }
 
     fun connectTo(device: InetAddress?) {
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Connecting...", false) {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(null, "Connecting...", true) {
+            private var shouldRun = true
+            private var tries = 0
+
             override fun run(p0: ProgressIndicator) {
-                if (device != null) {
-                    conn = ConnectionBuilder(device.hostAddress, 22)
+                tries = 0
+                runInternal(p0)
+            }
+
+            private fun runInternal(p0: ProgressIndicator) {
+                try {
+                    if (device != null) {
+                        conn = ConnectionBuilder(device.hostAddress, 22)
                             .withUsername("robot")
                             .withPassword("maker")
-                    sftp = conn!!.openSftpChannel()
-                } else {
-                    sftp = null
-                    conn = null
+                            .withSshPasswordProvider(object : SshPasswordProvider {
+                                override fun askUserForPassword(message: String) = arrayOf("maker")
+                                override fun getPassphrase() = "maker"
+                                override fun getPassword() = "maker"
+                                override fun promptYesNo(message: String) = true
+                                override fun showMessage(message: String) {}
+                                override fun promptKeyboardInteractive(
+                                    destination: String?,
+                                    name: String?,
+                                    instruction: String?,
+                                    prompt: Array<out String>,
+                                    echo: BooleanArray
+                                ) = arrayOf("maker")
+                            })
+                        sftp = conn!!.openSftpChannel()
+                    } else {
+                        sftp = null
+                        conn = null
+                    }
+                    fireSftpUpdateEvent()
+                } catch (e: Exception) {
+                    if (shouldRun) {
+                        if (tries < 3) {
+                            tries++
+                            runInternal(p0)
+                        } else {
+                            throw e
+                        }
+                    }
                 }
-                fireSftpUpdateEvent()
+            }
+
+            override fun onCancel() {
+                super.onCancel()
+                shouldRun = false
             }
         })
     }
@@ -136,7 +158,6 @@ class Ev3devConnector(private val project: Project) {
 
     private fun fireChangeEvent() {
         SwingUtilities.invokeLater {
-            if (project.isDisposed) return@invokeLater
             for (listener in listeners.get()) {
                 try {
                     listener.invoke()
@@ -148,7 +169,6 @@ class Ev3devConnector(private val project: Project) {
 
     fun fireSftpUpdateEvent() {
         SwingUtilities.invokeLater {
-            if (project.isDisposed) return@invokeLater
             for (listener in sftpListeners.get()) {
                 try {
                     listener.invoke(sftp)
@@ -164,7 +184,7 @@ class Ev3devConnector(private val project: Project) {
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): Ev3devConnector = ServiceManager.getService(project, Ev3devConnector::class.java)
+        fun getInstance(): Ev3devConnector = ServiceManager.getService(Ev3devConnector::class.java)
     }
 }
 

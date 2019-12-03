@@ -17,13 +17,12 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jmdns:jmdns:3.5.5")
     testCompile("junit:junit:4.12")
     implementation(fileTree(dir: "libs", include: ["*.jar"]))
 }
 
 intellij {
-    version = "LATEST-EAP-SNAPSHOT"
+    version = "2019.3"
     type = "CL"
 }
 

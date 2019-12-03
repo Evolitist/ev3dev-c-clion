@@ -37,7 +37,7 @@
         <stepsBeforeRunProvider implementation="com.evolitist.ev3c.execution.Ev3devDeployBeforeRunTaskProvider"/>
         <toolWindow id="Device Files" icon="AllIcons.Nodes.Folder" anchor="right" secondary="true"
                     factoryClass="com.evolitist.ev3c.toolwindow.Ev3devFilesToolWindowFactory"/>
-        <projectService id="Ev3dev.Conn" serviceImplementation="com.evolitist.ev3c.component.Ev3devConnector"/>
+        <applicationService id="Ev3dev.Conn" serviceImplementation="com.evolitist.ev3c.component.Ev3devConnector"/>
     </extensions>
 
     <actions>

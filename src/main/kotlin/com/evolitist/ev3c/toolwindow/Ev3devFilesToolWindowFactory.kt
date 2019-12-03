@@ -27,11 +27,11 @@ import javax.swing.tree.DefaultTreeModel
 class Ev3devFilesToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(p0: Project, p1: ToolWindow) {
         val factory = ContentFactory.SERVICE.getInstance()
-        val component = Ev3devConnector.getInstance(p0)
+        val component = Ev3devConnector.getInstance()
         (p1 as ToolWindowEx).setAdditionalGearActions(DefaultActionGroup(
                 action("Restart UI") {
                     // TODO: debug, debug, DEBUG
-                    val connector = Ev3devConnector.getInstance(it.project!!)
+                    val connector = Ev3devConnector.getInstance()
                     connector.sftp ?: return@action
                     connector("echo 'maker' | sudo -S systemctl restart brickman")
                 }
@@ -60,8 +60,8 @@ class Ev3devFilesToolWindowFactory : ToolWindowFactory {
                     if (tree.selectionCount == 0) return@iconAction
                     val model = tree.model as DefaultTreeModel
                     tree.selectionPaths
-                            .map { it.lastPathComponent as DefaultMutableTreeNode }
-                            .forEach { node ->
+                            ?.map { it.lastPathComponent as DefaultMutableTreeNode }
+                            ?.forEach { node ->
                                 val file = node.userObject as SftpFile
                                 if (file.rm()) {
                                     model.removeNodeFromParent(node)
