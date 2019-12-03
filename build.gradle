@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.evolitist"
-version = "0.8.2"
+version = "0.9.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -41,6 +41,12 @@ compileTestKotlin {
 patchPluginXml {
     sinceBuild("191")
     changeNotes """
+<b>0.9.0</b>
+    <ul>
+        <li>Adapt for CLion 2019.3</li>
+        <li>Improve connector service stability</li>
+        <li>Use single connector instance for all open projects</li>
+    </ul>
 <b>0.8.2</b>
     <ul>
         <li>Adapt for CLion 2019.2</li>
